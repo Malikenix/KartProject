@@ -2,111 +2,50 @@
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InGameMenuManager : MonoBehaviour
+namespace KartGame.UI
 {
-    [Tooltip("Root GameObject of the menu used to toggle its activation")]
-    public GameObject menuRoot;
-    [Tooltip("Master volume when menu is open")]
-    [Range(0.001f, 1f)]
-    public float volumeWhenMenuOpen = 0.5f;
-    [Tooltip("Toggle component for shadows")]
-    public Toggle shadowsToggle;
-    [Tooltip("Toggle component for framerate display")]
-    public Toggle framerateToggle;
-    [Tooltip("GameObject for the controls")]
-    public GameObject controlImage;
-
-    //PlayerInputHandler m_PlayerInputsHandler;
-    FramerateCounter m_FramerateCounter;
-
-    void Start()
+    public class InGameMenuManager : MonoBehaviour
     {
-        //m_PlayerInputsHandler = FindObjectOfType<PlayerInputHandler>();
-        //DebugUtility.HandleErrorIfNullFindObject<PlayerInputHandler, InGameMenuManager>(m_PlayerInputsHandler, this);
+        [Tooltip("Root GameObject of the menu UI")]
+        public GameObject menuRoot;
+        [Tooltip("Button to select when the menu is opened")]
+        public Button firstSelectedButton;
 
-        m_FramerateCounter = FindObjectOfType<FramerateCounter>();
-        //DebugUtility.HandleErrorIfNullFindObject<FramerateCounter, InGameMenuManager>(m_FramerateCounter, this);
+        bool m_MenuActive;
 
-        menuRoot.SetActive(false);
-
-        shadowsToggle.isOn = QualitySettings.shadows != ShadowQuality.Disable;
-        shadowsToggle.onValueChanged.AddListener(OnShadowsChanged);
-
-        framerateToggle.isOn = m_FramerateCounter.uiText.gameObject.activeSelf;
-        framerateToggle.onValueChanged.AddListener(OnFramerateCounterChanged);
-    }
-
-    private void Update()
-    {
-        
-        if (Input.GetButtonDown(GameConstants.k_ButtonNamePauseMenu)
-            || (menuRoot.activeSelf && Input.GetButtonDown(GameConstants.k_ButtonNameCancel)))
+        void Start()
         {
-            if (controlImage.activeSelf)
-            {
-                controlImage.SetActive(false);
-                return;
-            }
-
-            SetPauseMenuActivation(!menuRoot.activeSelf);
-
+            menuRoot.SetActive(false);
+            m_MenuActive = false;
         }
 
-        if (Input.GetAxisRaw(GameConstants.k_AxisNameVertical) != 0)
+        void Update()
         {
-            if (EventSystem.current.currentSelectedGameObject == null)
+            // Toggles menu with Escape key
+            if (Input.GetButtonDown("Cancel") || Input.GetKeyDown(KeyCode.Escape))
             {
-                EventSystem.current.SetSelectedGameObject(null);
-                shadowsToggle.Select();
+                SetMenuActivation(!m_MenuActive);
             }
         }
-    }
 
-    public void ClosePauseMenu()
-    {
-        SetPauseMenuActivation(false);
-    }
-
-
-    public void TogglePauseMenu()
-    {
-        SetPauseMenuActivation(!menuRoot.activeSelf);
-    }
-    void SetPauseMenuActivation(bool active)
-    {
-        menuRoot.SetActive(active);
-
-        if (menuRoot.activeSelf)
+        public void SetMenuActivation(bool active)
         {
-       //     Cursor.lockState = CursorLockMode.None;
-          //  Cursor.visible = true;
-            Time.timeScale = 0f;
-            AudioUtility.SetMasterVolume(volumeWhenMenuOpen);
+            m_MenuActive = active;
+            menuRoot.SetActive(m_MenuActive);
 
-            EventSystem.current.SetSelectedGameObject(null);
+            if (m_MenuActive)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+                Time.timeScale = 0f; // Pauses the game
+                EventSystem.current.SetSelectedGameObject(firstSelectedButton.gameObject);
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+                Time.timeScale = 1f; // Resumes the game
+            }
         }
-        else
-        {
-         //   Cursor.lockState = CursorLockMode.Locked;
-         //   Cursor.visible = false;
-            Time.timeScale = 1f;
-            AudioUtility.SetMasterVolume(1);
-        }
-
-    }
-
-    void OnShadowsChanged(bool newValue)
-    {
-        QualitySettings.shadows = newValue ? ShadowQuality.All : ShadowQuality.Disable;
-    }
-
-    void OnFramerateCounterChanged(bool newValue)
-    {
-        m_FramerateCounter.uiText.gameObject.SetActive(newValue);
-    }
-
-    public void OnShowControlButtonClicked(bool show)
-    {
-        controlImage.SetActive(show);
     }
 }

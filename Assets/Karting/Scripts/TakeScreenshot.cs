@@ -1,9 +1,11 @@
 ﻿using System.IO;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using UnityEngine;
 using UnityEngine.UI;
+using KartGame.UI;
 
 public class TakeScreenshot : MonoBehaviour
 {
